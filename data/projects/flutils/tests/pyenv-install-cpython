@@ -1,0 +1,302 @@
+#!/usr/bin/env bash
+# This script will pyenv install the latest CPython version for each
+# minor-version given as arguments.  Additionally
+# the pyenv local will be set accordingly.
+
+set -e
+
+#######################################
+# GLOBALS
+#######################################
+
+# These packages will be installed/upgraded
+PACKAGES='setuptools pip pipenv twine tox tox-pyenv'
+
+PACKAGES_COMMA=''
+MINOR_VERSIONS=''
+FULL_VERSIONS=''
+PYENV_DIR=''
+RESULTS=''
+SCRIPT_NAME="$(basename "${0}")"
+SHOW_HELP=false
+RUN_PYENV_LOCAL=true
+
+#######################################
+# Add result text to RESULTS
+#
+# Arguments:
+#   1: text
+#
+# Returns: 0
+#######################################
+__res() {
+  if [ -n "${RESULTS}" ]; then
+    RESULTS="${RESULTS}\n  * ${1}"
+  else
+    RESULTS="  * ${1}"
+  fi
+}
+
+#######################################
+# Print the help for this command.
+#
+# Returns: 0
+#######################################
+__show_help() {
+  local _pkg
+  echo "Usage: ${SCRIPT_NAME} [optional arguments] <ver> [ver...]"
+  echo
+  echo "  Pyenv install the latest CPython version for given minor-version."
+  echo "  Use this command to install the latest CPython version for a given"
+  echo "  minor-version (e.g. 3.6, 3.7)."
+  echo
+  echo "Optional Arguments:"
+  echo "  -h, --help"
+  echo "    Show help"
+  echo
+  echo "  --no-pyenv-local"
+  echo "    Do not create the .python-version file after install"
+  echo
+  echo "Positional Arguments:"
+  echo "  ver..."
+  echo "    The version of CPython to install with pyenv.  If this is a"
+  echo "    a minor-version (eg 3.6 3.7) then the latest micro-version will"
+  echo "    be installed.  For example: if 3.7 is given, the latest 3.7.x"
+  echo "    will be installed."
+  echo
+  echo "Caveats:"
+  echo "  * Does NOT reinstall existing pyenv installed CPythons"
+  echo "  * If the given ver does NOT exist nothing will be installed"
+  echo "  * Only works for installing CPythons"
+  echo "  * Will not install any versions that are alpha, beta, etc."
+  echo "  * Will also install/upgrade the packages:"
+  for _pkg in $PACKAGES; do
+    echo "      ${_pkg}"
+  done
+  echo
+}
+
+#######################################
+# Process the command line arguments.
+#
+# Arguments:
+#   $@
+#
+# Returns: 0
+#   Prints result space delimited
+#######################################
+__process_args() {
+  local _arg _pkg
+  for _arg in "$@"; do
+    case $_arg in
+    -h | --help)
+      SHOW_HELP=true
+      break
+      ;;
+    --no-pyenv-local)
+      RUN_PYENV_LOCAL=false
+      ;;
+    *)
+      if [ -z "${MINOR_VERSIONS}" ]; then
+        MINOR_VERSIONS="${_arg}"
+      else
+        MINOR_VERSIONS="${MINOR_VERSIONS} ${_arg}"
+      fi
+      ;;
+    esac
+  done
+  for _pkg in ${PACKAGES}; do
+    if [ -z "${PACKAGES_COMMA}" ]; then
+      PACKAGES_COMMA="${_pkg}"
+    else
+      PACKAGES_COMMA="${PACKAGES_COMMA}, ${_pkg}"
+    fi
+  done
+}
+
+#######################################
+# Print out all of the pyenv CPython
+# installable versions.
+#
+# Returns: 0
+#   Prints result space delimited
+#######################################
+__pyenv_cpython_installable_versions() {
+  local _i _out _row _re
+  _i=0
+  _out=""
+  _re='^[0-9]+[.][0-9]+[.][0-9]+$'
+  while read -r _row; do
+    if [ $_i -gt 0 ]; then
+      if [[ $_row =~ $_re ]]; then
+        if [ -z "${_out}" ]; then
+          _out="${_row} "
+        else
+          _out="${_out}${_row} "
+        fi
+      fi
+    fi
+    let _i=_i+1
+  done <<<"$(pyenv install -l)"
+  echo "${_out}"
+}
+
+#######################################
+# Print out all of the pyenv CPython
+# installed versions.
+#
+# Returns: 0
+#   Prints result space delimited
+#######################################
+__pyenv_cpython_installed_versions() {
+  local _f _re _out
+  _out=""
+  _re='^[0-9]+[.][0-9]+[.][0-9]+$'
+  for _f in $PYENV_DIR/versions/*/; do
+    _f="$(basename "$_f")"
+    if [[ $_f =~ $_re ]]; then
+      if [ -z "${_out}" ]; then
+        _out="${_f} "
+      else
+        _out="${_out}${_f} "
+      fi
+    fi
+  done
+  echo "${_out}"
+}
+
+#######################################
+# Print the highest pyenv full CPython
+# installable version for the given
+# version.
+#
+# Arguments:
+#   $1: The python version.
+#       (3.7, 3.6.6, 3)
+# Returns: 0
+#   Prints the result if found
+#######################################
+__pyenv_find_latest_cpython_version() {
+  local _ver _len _row _out
+  _ver="${1}"
+  _len="${#_ver}"
+  while read -r -d ' ' _row; do
+    if [ ${#_row} -ge ${_len} ]; then
+      if [ "${_row:0:${_len}}" == "${_ver}" ]; then
+        _out="${_row}"
+      fi
+    fi
+  done <<<"$(__pyenv_cpython_installable_versions)"
+  echo "${_out}"
+}
+
+#######################################
+# Test if the given full CPython
+# version has been installed by pyenv.
+#
+# Arguments:
+#   $1: the full CPython version
+# Returns: 0
+#   Prints 'yes' if found.
+#   Prints 'no' if not found.
+#######################################
+__pyenv_is_cpython_version_installed() {
+  local _row
+  while read -r -d ' ' _row; do
+    if [ "${_row}" == "${1}" ]; then
+      echo "yes"
+      return 0
+    fi
+  done <<<"$(__pyenv_cpython_installed_versions)"
+  echo "no"
+}
+
+#######################################
+# Pyenv install the maximum full
+# Python versions for each minor
+# version that has been set in
+# $MINOR_VERSIONS
+#######################################
+__install() {
+  local _v _ver _all _exists _installed
+  _all=""
+  for _v in $MINOR_VERSIONS; do
+    _already_installed=false
+    _ver="$(__pyenv_find_latest_cpython_version "${_v}")"
+
+    if [ -n "${_ver}" ]; then
+      _exists="$(__pyenv_is_cpython_version_installed "${_ver}")"
+      if [ "${_exists}" = "yes" ]; then
+        _already_installed=true
+      fi
+      if [ "${_already_installed}" = true ]; then
+        __res "CPython version '${_ver}' has already been installed with pyenv."
+      else
+        echo "pyenv install --skip-existing --verbose ${_ver}"
+        pyenv install --skip-existing --verbose "${_ver}"
+        __res "CPython version '${_ver} has been installed with pyenv.'"
+      fi
+
+      if [ -n "${_all}" ]; then
+        _all="${_all} ${_ver}"
+      else
+        _all="${_ver}"
+      fi
+
+      echo "${PYENV_DIR}/versions/${_ver}/bin/pip${_v} install --upgrade ${PACKAGES}"
+      "${PYENV_DIR}/versions/${_ver}/bin/pip${_v}" install --upgrade $PACKAGES
+      if [ "${_already_installed}" = true ]; then
+        __res "The following pyenv CPython '${_ver}' packages have been updated:\n    ${PACKAGES_COMMA}"
+      else
+        __res "The following pyenv CPython '${_ver}' packages have been installed/updated:\n    ${PACKAGES_COMMA}"
+      fi
+    fi
+  done
+  if [ -n "${_all}" ]; then
+    FULL_VERSIONS="${_all}"
+  fi
+}
+
+#######################################
+# Create the .python-version file
+# which holds the active full version
+# of each minor Python version.
+#######################################
+__pyenv_local() {
+  if [ -n "${FULL_VERSIONS}" ]; then
+    echo "pyenv local ${FULL_VERSIONS}"
+    pyenv local $FULL_VERSIONS
+    __res "The file '.python-version' has been set to: ${FULL_VERSIONS}"
+  fi
+}
+
+__process_args "$@"
+
+if [ "${SHOW_HELP}" = true ]; then
+  __show_help
+else
+  if [ -z "${MINOR_VERSIONS}" ]; then
+    echo >&2 "Error: No versions given"
+    exit 1
+  fi
+
+  # Make sure pyenv is installed.
+  command -v pyenv >/dev/null 2>&1 || {
+    echo >&2 "Error: Unable to find pyenv.  Is it installed?"
+    exit 1
+  }
+  PYENV_DIR="$(pyenv root)"
+
+  pyenv update
+  __install
+
+  if [ "${RUN_PYENV_LOCAL}" = true ]; then
+    __pyenv_local
+  fi
+
+  echo
+  echo "--- ${SCRIPT_NAME} Finished ---"
+  printf "${RESULTS}\n"
+  echo
+
+fi

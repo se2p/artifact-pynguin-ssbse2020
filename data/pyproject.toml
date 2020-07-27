@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "python-test-generation-experiments"
+version = "0.1.0"
+description = "Experiments for the python-test-generation paper"
+authors = ["Stephan Lukasczyk <stephan@lukasczyk.me>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+jupyterlab = "^2.0"
+numpy = "^1.18"
+Pygments = "^2.6"
+PyLaTeX = "^1.3"
+scipy = "^1.4"
+seaborn = "^0.10"
+matplotlib = "^3.2"
+pandas = "^1.0"
+simple-parsing = "^0.0.8"
+
+[tool.poetry.dev-dependencies]

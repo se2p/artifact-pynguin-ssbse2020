@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+#
+# Print the highest pyenv full CPython installable version for the given
+# root version.
+#
+# Arguments:
+#   $1: The python root version. (e.g. 3.7, 3.6.6, 3)
+#
+#   Prints the result if found
+#
+###############################################################################
+#
+# Get the dirname of this file.
+#
+# The following code comes from:
+#   https://stackoverflow.com/a/246128
+# THE FOLLOWING IS LICENSED AS:
+#   https://opensource.org/licenses/MIT
+#
+_source="${BASH_SOURCE[0]}"
+
+# Resolve $_source until the file is no longer a symlink
+while [[ -h "$_source" ]]; do
+  _dir="$( cd -P "$( dirname "${_source}" )" && pwd )"
+  _source="$(readlink "${_source}")"
+
+  # if $_source was a relative symlink, then resolve it relative to the path
+  # where the symlink file was located.
+  [[ "${_source}" != /* ]] && _source="${_dir}/${_source}"
+done
+_bin_home="$( cd -P "$( dirname "${_source}" )" && pwd )"
+
+# END OF MIT LICENCED CODE
+###############################################################################
+
+if [[ -z "${1}" ]]; then
+  _ver="3"
+else
+  _ver="${1}"
+fi
+_len="${#_ver}"
+_out=""
+while read -r _row; do
+  if [[ ${#_row} -ge ${_len} ]]; then
+    if [[ "${_row:0:${_len}}" == "${_ver}" ]]; then
+      _out="${_row}"
+    fi
+  fi
+done <<<"$("${_bin_home}/pyenv-cpython-versions")"
+if [[ -n "${_out}" ]]; then
+  echo "${_out}"
+fi

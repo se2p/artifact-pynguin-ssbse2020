@@ -1,0 +1,7 @@
+image: registry.gitlab.com/finite-loop/flutils/pyenv:latest
+
+tests:
+  script: tox
+  variables:
+    PATH: "/opt/python/bin:/opt/poetry/bin:/opt/pyenv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+

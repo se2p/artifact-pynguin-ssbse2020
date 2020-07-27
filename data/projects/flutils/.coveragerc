@@ -1,0 +1,15 @@
+[run]
+omit =
+    */.local/*
+    setup.py
+    tests/*
+    flutils/__init__.py
+    flutils/setuputils.py
+    .tox/*
+
+[report]
+exclude_lines =
+  from functools import cached_property
+  from \.decorators import cached_property
+  pragma: no cover
+

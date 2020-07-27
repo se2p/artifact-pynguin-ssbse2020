@@ -1,0 +1,16 @@
+{
+  "company": {
+    "name": [
+      "Test"
+    ],
+    "type": {
+      "abbr": [
+        "Test"
+      ],
+      "title": [
+        "Test"
+      ]
+    }
+  },
+  "currency-code": "Test"
+}

@@ -1,0 +1,63 @@
+{
+  "constraint": "chimaira",
+  "budget": 600,
+  "output_variables": "TargetModule,CodeObjects,Predicates,AccessibleObjectsUnderTest,GenerableTypes",
+  "project_path": "projects",
+  "docker_container_path": "/scratch/lukasczy",
+  "docker_container_id": "5f53883",
+  "configurations": [
+    {
+      "name": "RandooPy-TypeHintsInference",
+      "algorithm": "RANDOOPY",
+      "type_inference_strategy": "TYPE_HINTS",
+      "seeding": "True",
+      "guess_unknown_types": "False"
+    }
+  ],
+  "projects": [
+    {
+      "name": "apimd"
+    },
+    {
+      "name": "async_btree"
+    },
+    {
+      "name": "codetiming"
+    },
+    {
+      "name": "flutes"
+    },
+    {
+      "name": "flutils"
+    },
+    {
+      "name": "python-string-utils",
+      "project_name": "string_utils"
+    },
+    {
+      "name": "docstring_parser"
+    },
+    {
+      "name": "mimesis"
+    },
+    {
+      "name": "pytutils"
+    },
+    {
+      "name": "pydriller"
+    },
+    {
+      "name": "pypara"
+    }
+  ],
+  "exclude": [
+    {
+      "project": "flutes",
+      "modules": ["flutes.fs"]
+    },
+    {
+      "project": "flutils",
+      "modules": ["flutils.cmdutils"]
+    }
+  ]
+}

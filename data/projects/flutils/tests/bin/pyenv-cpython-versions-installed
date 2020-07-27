@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+_pyenv_dir="$(pyenv root)"
+_re='^[0-9]+[.][0-9]+[.][0-9]+$'
+for _f in "${_pyenv_dir}/versions/"*/; do
+  _f="$(basename "$_f")"
+  if [[ ${_f} =~ ${_re} ]]; then
+    echo "${_f}"
+  fi
+done

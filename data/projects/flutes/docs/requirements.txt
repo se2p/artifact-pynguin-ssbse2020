@@ -1,0 +1,6 @@
+recommonmark
+sphinx
+sphinx-rtd-theme>=0.2.4
+sphinxcontrib-spelling
+
+-r ../requirements.txt

@@ -1,0 +1,11 @@
+[tool.black]
+
+line-length = 120
+target_version = ["py37"]
+
+[tool.isort]
+
+line_length = 120
+multi_line_output = 3
+known_standard_library = ["dataclasses", "typing_extensions"]
+include_trailing_comma = true

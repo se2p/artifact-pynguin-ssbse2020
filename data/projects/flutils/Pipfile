@@ -1,0 +1,27 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+
+[dev-packages]
+autopep8 = "*"
+bandit = "*"
+coverage = "*"
+flake8 = "*"
+flutils = {path = ".",editable = true}
+ipdb = "*"
+ipython = "*"
+isort = "*"
+mypy = "*"
+pylint = "*"
+sphinx = "*"
+sphinx-autobuild = "*"
+sphinx-autodoc-typehints = "*"
+sphinx-rtd-theme = "*"
+tox = "*"
+twine = "*"
+
+[requires]
+python_version = "3.8"

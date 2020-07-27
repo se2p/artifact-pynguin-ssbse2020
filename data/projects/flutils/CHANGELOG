@@ -1,0 +1,60 @@
+#############
+Release Notes
+#############
+
+0.6
+---
+* Released: 2020-03-30
+* Added :obj:`~flutils.txtutils.len_without_ansi`
+* Added :obj:`~flutils.txtutils.AnsiTextWrapper`
+* Added :obj:`~flutils.cmdutils.run`
+
+
+0.5
+---
+
+* Released: 2020-02-20
+* Added :obj:`~flutils.namedtupleutils.to_namedtuple`
+* Works with `Python3.8 <https://www.python.org/downloads/>`_
+
+0.4
+---
+
+* Released: 2019-07-16
+* Added :obj:`~flutils.setuputils.add_setup_cfg_commands`
+* Added :obj:`~flutils.strutils.as_escaped_unicode_literal`
+* Added :obj:`~flutils.strutils.as_escaped_utf8_literal`
+* Added :obj:`~flutils.strutils.convert_escaped_unicode_literal`
+* Added :obj:`~flutils.strutils.convert_escaped_utf8_literal`
+* Added the :ref:`b64` codecs via :obj:`~flutils.codecs.register_codecs`
+* Added the :ref:`raw_utf8_escape` codec via :obj:`~flutils.codecs.register_codecs`
+* Removed the restriction of Python string method names as identifiers in:
+
+  * :obj:`~flutils.validators.validate_identifier`
+  * :obj:`~flutils.moduleutils.cherry_pick`
+
+* Rewrite of :obj:`~flutils.packages.bump_version`
+* Improved unit and integration tests.
+
+0.3
+---
+
+* Released: 2018-10-29
+* Added :obj:`~flutils.packages.bump_version`
+
+0.2
+---
+
+* Released: 2018-10-27
+* Added :obj:`~flutils.decorators.cached_property`
+* Works with `Python3.7 <https://www.python.org/downloads/>`_
+
+
+0.1
+---
+
+* Released: 2018-07-06
+* Initial release
+* Works with `Python3.6 <https://www.python.org/downloads/>`_
+
+

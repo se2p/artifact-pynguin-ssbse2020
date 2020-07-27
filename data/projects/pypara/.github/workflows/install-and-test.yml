@@ -1,0 +1,23 @@
+name: Install and Test
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v1
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+      - name: Setup Pipenv
+        uses: dschep/install-pipenv-action@v1
+      - name: Install Dependencies
+        run: pipenv install --dev
+      - name: Run test suite
+        run: pipenv run tox
+      - name: Run checks for security vulnerabilities and against PEP 508 markers
+        run: pipenv check
+      - name: Show Outdated Dependencies
+        run: pipenv run pip list -o

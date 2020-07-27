@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Prints all the installed pyenv cpython versions
+_i=0
+_re='^[0-9]+[.][0-9]+[.][0-9]+$'
+while read -r _row; do
+  if [[ ${_i} -gt 0 ]]; then
+    if [[ ${_row} =~ ${_re} ]]; then
+      echo "${_row}"
+    fi
+  fi
+  let _i=_i+1
+done <<<"$(pyenv install -l)"
