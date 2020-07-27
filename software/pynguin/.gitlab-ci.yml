@@ -1,0 +1,114 @@
+image: python:${PYTHON_VERSION}
+
+workflow:
+  rules:
+    - if: $CI_MERGE_REQUEST_ID           # Execute jobs in merge request context
+    - if: $CI_COMMIT_BRANCH == 'master'  # Execute jobs when a new commit is pushed to master branch
+
+stages:
+  - build
+  - test
+  - deploy
+
+before_script:
+  - python --version
+  - pip install poetry
+  - poetry install
+
+.unit-tests: &unit-tests
+  stage: test
+  script:
+    - poetry run pytest -p no:sugar -q --cov=pynguin --cov-branch --cov-report html:cov_html --cov-report=term-missing tests/
+  artifacts:
+    paths:
+      - cov_html
+
+unit-tests:python-3.8:
+  <<: *unit-tests
+  variables:
+    PYTHON_VERSION: '3.8-buster'
+
+unit-tests:python-3.9:
+  <<: *unit-tests
+  variables:
+    PYTHON_VERSION: '3.9-rc-buster'
+
+.nightly-tests:
+  only:
+    - schedules
+  stage: test
+  before_script:
+    - python --version
+    - pip install poetry
+    - poetry install
+    - poetry add --dev pytest-random-order
+  script:
+    - for ((i=1; i<=10; i++)); do echo "test run ${i}\n"; poetry run pytest -p no:sugar -q --cov=pynguin --cov-branch --random-order --random-order-bucket=global ; done
+
+nightly-tests:python-3.8:
+  extends: .nightly-tests
+  variables:
+    PYTHON_VERSION: '3.8-buster'
+
+nightly-tests:python-3.9:
+  extends: .nightly-tests
+  variables:
+    PYTHON_VERSION: '3.9-rc-buster'
+
+mypy:
+  stage: build
+  image: python:3.8
+  script:
+    - poetry run mypy pynguin
+
+pylint:
+  stage: build
+  image: python:3.8
+  script:
+    - poetry run pylint pynguin
+
+black:
+  stage: build
+  image: python:3.8
+  script:
+    - poetry run black --check .
+
+isort:
+  stage: build
+  image: python:3.8
+  script:
+    - poetry run isort **/*.py -c -v
+
+safety:
+  stage: build
+  image: python:3.8
+  script:
+    - poetry run safety check --full-report
+
+bandit:
+  stage: build
+  image: python:3.8
+  script:
+    - poetry run bandit -ll -r pynguin
+
+pages:
+  stage: deploy
+  variables:
+    PYTHON_VERSION: '3.8'
+  dependencies:
+    - unit-tests:python-3.8
+  before_script:
+    - mkdir -p ~/.ssh
+    - echo -e "$DEPLOY_KEY" > ~/.ssh/id_ed25519
+    - chmod 600 ~/.ssh/id_ed25519
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\tIdentityFile ~/.ssh/id_ed25519\n\n" > ~/.ssh/config
+  script:
+    - mv cov_html/ public/
+    - cp -R public pynguincoverage
+    - scp -r -P 9418 pynguincoverage pagedeploy@contabo.lukasczyk.me:/var/www/pagedeploy
+  artifacts:
+    paths:
+      - public
+    expire_in: 30 days
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'master'
